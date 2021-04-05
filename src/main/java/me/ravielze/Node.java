@@ -6,6 +6,9 @@ public class Node implements Comparable<Node> {
 
     private double costH, costG;
 
+    private Integer x;
+    private Integer y;
+
     @Override
     public int hashCode() {
         int result = name.hashCode();
@@ -35,10 +38,22 @@ public class Node implements Comparable<Node> {
         return this.costG;
     }
 
-    public Node(String name, double costH, double costG) {
+    public Node(String name, double costH, double costG, Integer x, Integer y) {
         this.name = name;
         this.costH = costH;
         this.costG = costG;
+        this.x = x;
+        this.y = y;
+    }
+    public void show () {
+        System.out.printf("Name : %s x : %d y : %d\n", name, x, y);
+    }
+
+    public Integer getX () {
+        return x;
+    }
+    public Integer getY () {
+        return y;
     }
 
     public double getCost() {
