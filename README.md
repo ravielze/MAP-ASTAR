@@ -10,7 +10,14 @@ Pada kasus pencarian lintasan di peta, informasi yang diperoleh adalah koordinat
 - Maven
 
 ## Usage
+
+### Cara otomatis
 Jalankan run.bat untuk Windows, run.sh untuk Linux.
+
+### Cara Manual
+Ketik ```mvn clean install```.
+Lalu pergi ke ```folder target```, dan akan ada jar yang bisa digunakan disana.
+Gunakan command ```java -jar <namajar>.jar```
 
 ## Identitas Pembuat
 Program ini dibuat oleh [Steven Nataniel](https://github.com/ravielze) dan [Jason Stanley](https://github.com/jasonstanleyyoman) untuk menuntaskan tugas kecil 3 dari mata kuliah IF2211 Strategi Algoritma
