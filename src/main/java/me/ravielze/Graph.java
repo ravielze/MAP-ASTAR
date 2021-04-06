@@ -1,12 +1,9 @@
 package me.ravielze;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.PriorityQueue;
-import java.util.Collections;
 import java.util.Map;
 
 
@@ -20,8 +17,21 @@ public class Graph {
 
     // Adjacency List, atau list ketetanggaan
     private HashMap<Node, ArrayList<Node>> adjList = new HashMap<Node, ArrayList<Node>>();
+    public static final int Radius = 6371000;
+    public static double haversine (double lat1, double lon1, double lat2, double lon2) {
+        double phi1 = Math.toRadians(lat1);
+        double phi2 = Math.toRadians(lat2);
 
-    
+        double deltaPhi = Math.toRadians(lat2 - lat1);
+        double deltaLambda = Math.toRadians(lon2 - lon1);
+        // a = math.sin(delta_phi / 2.0) ** 2 + math.cos(phi_1) * math.cos(phi_2) * math.sin(delta_lambda / 2.0) ** 2
+        double a = Math.pow(Math.sin(deltaPhi / 2.0), 2) + Math.cos(phi1) * Math.cos(phi2) * Math.pow(Math.sin(deltaLambda / 2.0),2);
+        
+        // c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+        return Radius * c;
+    }
 
     public Graph() {
 
@@ -34,10 +44,10 @@ public class Graph {
      * @param end   node akhir, bisa ditukar-tukar
      * @param cost  distance
      */
-    public Node addNode (String node, Integer x, Integer y) {
+    public Node addNode (String node, double lat, double lon) {
         Node curr = getNodeByString(node);
         if (curr == null) {
-            Node newNode = new Node(node, 0, 0, x, y);
+            Node newNode = new Node(node, 0, 0, lat, lon);
             adjList.put(newNode, new ArrayList<Node>());
             return newNode;
         }
@@ -50,7 +60,7 @@ public class Graph {
         }
         return node;
     }
-    public void addEdge(Node startNode, Node endNode, Double cost) {
+    public void addEdge(Node startNode, Node endNode) {
 
         // Kalau node start belum ada di adjacency List, construct new List
         startNode = addNode(startNode);
@@ -65,8 +75,9 @@ public class Graph {
 
         // Masukkan node start dan end pada cost table
         // Ini adjacency matrix
-        costTable.put(startNode,endNode, cost);
-        costTable.put(endNode,startNode, cost);
+        double distance = haversine(startNode.getLatitude(), startNode.getLongitude(), endNode.getLatitude(), endNode.getLongitude());
+        costTable.put(startNode,endNode, distance);
+        costTable.put(endNode,startNode, distance);
     }
 
     /**
@@ -88,11 +99,11 @@ public class Graph {
     public void showGraph () {
         for (Map.Entry<Node, ArrayList<Node>> entry : adjList.entrySet()) {
             System.out.println("Node : ");
-            entry.getKey().show();
+            System.out.println(entry.getKey());
             System.out.println("Neighbour : ");
 
             for (Node neighbour : entry.getValue()) {
-                neighbour.show();
+                System.out.println(neighbour);
                 System.out.printf("Cost : %f\n", getCost(entry.getKey(), neighbour));
             }
         }
@@ -109,7 +120,7 @@ public class Graph {
 
     private Node getNodeByString (String name) {
         for (Node node : adjList.keySet()) {
-            if (node.getName() == name) {
+            if (node.getName().equals(name)) {
                 return node;
             }
         }
@@ -120,6 +131,7 @@ public class Graph {
         // A* Algorithm
         PriorityQueue<Node> pQueue = new PriorityQueue<Node>();
         Node startNode = getNodeByString(start);
+        Node endNode = getNodeByString(end);
         pQueue.add(startNode);
 
         HashMap<String, Double> costSoFar = new HashMap<String, Double>();
@@ -137,8 +149,8 @@ public class Graph {
                 Double costG = costSoFar.get(current.getName()) + getCost(current, neighbour);
                 if (!costSoFar.containsKey(neighbour.getName()) || costG < costSoFar.get(neighbour.getName())) {
                     costSoFar.put(neighbour.getName(), costG);
-                    Double costH = heuristic(current, neighbour);
-                    Node newNode = new Node(neighbour.getName(), costH, costG, neighbour.getX(), neighbour.getY());
+                    Double costH = neighbour.heuristic(endNode);
+                    Node newNode = new Node(neighbour, costH, costG);
                     pQueue.add(newNode);
                     cameFrom.put(neighbour.getName(), current.getName());
 
@@ -161,18 +173,11 @@ public class Graph {
                 System.out.print("->");
             }
             System.out.print(path.get(i));
-
-            
         }
         System.out.println();
         System.out.printf("Estimated cost : %.2f\n", costSoFar.get(end));
 
     }
 
-    private Double heuristic (Node start, Node end) {
-        // Use euclidian distance as heuristic
-        Double dx = Double.valueOf(start.getX()) - Double.valueOf(end.getX());
-        Double dy = Double.valueOf(start.getY()) - Double.valueOf(end.getY());
-        return Math.sqrt((dx * dx) + (dy * dy));
-    }
+
 }
