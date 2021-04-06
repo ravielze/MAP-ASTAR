@@ -3,6 +3,7 @@ package me.ravielze;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.PriorityQueue;
 import java.util.Map;
 
@@ -16,50 +17,47 @@ public class Graph {
     private Table<Node, Node, Double> costTable = HashBasedTable.create();
 
     // Adjacency List, atau list ketetanggaan
-    private HashMap<Node, ArrayList<Node>> adjList = new HashMap<Node, ArrayList<Node>>();
-    public static final int Radius = 6371000;
-    public static double haversine (double lat1, double lon1, double lat2, double lon2) {
-        double phi1 = Math.toRadians(lat1);
-        double phi2 = Math.toRadians(lat2);
-
-        double deltaPhi = Math.toRadians(lat2 - lat1);
-        double deltaLambda = Math.toRadians(lon2 - lon1);
-        // a = math.sin(delta_phi / 2.0) ** 2 + math.cos(phi_1) * math.cos(phi_2) * math.sin(delta_lambda / 2.0) ** 2
-        double a = Math.pow(Math.sin(deltaPhi / 2.0), 2) + Math.cos(phi1) * Math.cos(phi2) * Math.pow(Math.sin(deltaLambda / 2.0),2);
-        
-        // c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
-        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
-        return Radius * c;
-    }
+    private HashMap<Node, HashSet<Node>> adjList = new HashMap<Node, HashSet<Node>>();
 
     public Graph() {
 
     }
-
     /**
-     * Untuk menambah edge pada graf
+     * Untuk menambah node pada graf
      * 
-     * @param start node awal
-     * @param end   node akhir, bisa ditukar-tukar
-     * @param cost  distance
+     * @param node  Nama node
+     * @param lat   Koordinat Latitude
+     * @param lon   Koordinat Longitude
+     * @return Node the result node added
      */
     public Node addNode (String node, double lat, double lon) {
         Node curr = getNodeByString(node);
         if (curr == null) {
             Node newNode = new Node(node, 0, 0, lat, lon);
-            adjList.put(newNode, new ArrayList<Node>());
+            adjList.put(newNode, new HashSet<Node>());
             return newNode;
         }
         return curr;
     }
-
+    /**
+     * Untuk menambah node pada graf
+     * 
+     * @param node  Nama node
+     * @return Node the result node added
+     */
     public Node addNode (Node node) {
         if (!adjList.containsKey(node)) {
-            adjList.put(node, new ArrayList<Node>());
+            adjList.put(node, new HashSet<Node>());
         }
         return node;
     }
+
+    /**
+     * Untuk menambah edge pada graf
+     * 
+     * @param startNode node awal
+     * @param endNode   node akhir, bisa ditukar-tukar
+     */
     public void addEdge(Node startNode, Node endNode) {
 
         // Kalau node start belum ada di adjacency List, construct new List
@@ -69,13 +67,14 @@ public class Graph {
         // Kalau node end belum ada di adjacency List, construct new List
 
         // Tambahkan end pada adjacency list milik node start
+        
         adjList.get(startNode).add(endNode);
         // lakukan sebaliknya pada end dan start
         adjList.get(endNode).add(startNode);
 
         // Masukkan node start dan end pada cost table
         // Ini adjacency matrix
-        double distance = haversine(startNode.getLatitude(), startNode.getLongitude(), endNode.getLatitude(), endNode.getLongitude());
+        double distance = startNode.heuristic(endNode);
         costTable.put(startNode,endNode, distance);
         costTable.put(endNode,startNode, distance);
     }
@@ -97,15 +96,23 @@ public class Graph {
     }
 
     public void showGraph () {
-        for (Map.Entry<Node, ArrayList<Node>> entry : adjList.entrySet()) {
-            System.out.println("Node : ");
-            System.out.println(entry.getKey());
-            System.out.println("Neighbour : ");
-
+        for (Map.Entry<Node, HashSet<Node>> entry : adjList.entrySet()) {
+            System.out.println(entry.getKey() + " " + entry.getKey().getLL());
+            
+            int maxLength = 0;
             for (Node neighbour : entry.getValue()) {
-                System.out.println(neighbour);
-                System.out.printf("Cost : %f\n", getCost(entry.getKey(), neighbour));
+                if (neighbour.getName().length() > maxLength){
+                    maxLength = neighbour.getName().length();
+                }
             }
+
+            maxLength += 2;
+            String format = "\t-> %-" + maxLength + "s %-19s %-10s\n";
+            for (Node neighbour : entry.getValue()) {
+                String dis = String.format("[%.2f km]", getCost(entry.getKey(), neighbour)/1000D);
+                System.out.printf(format, neighbour.getName(), neighbour.getLL(), dis);
+            }
+            System.out.println();
         }
     }
 
@@ -117,7 +124,12 @@ public class Graph {
     public Collection<Node> getAllNode() {
         return adjList.keySet();
     }
-
+    /**
+     * Mendapatkan instance node dengan name
+     * 
+     * @param name  string yang akan dicari
+     * @return Node node yang namanya sesuai
+     */
     private Node getNodeByString (String name) {
         for (Node node : adjList.keySet()) {
             if (node.getName().equals(name)) {
@@ -132,6 +144,10 @@ public class Graph {
         PriorityQueue<Node> pQueue = new PriorityQueue<Node>();
         Node startNode = getNodeByString(start);
         Node endNode = getNodeByString(end);
+        if (startNode == null || endNode == null) {
+            System.out.println("Node not found");
+            return;
+        }
         pQueue.add(startNode);
 
         HashMap<String, Double> costSoFar = new HashMap<String, Double>();
@@ -144,7 +160,7 @@ public class Graph {
 
             if (current.getName() == end) break;
 
-            ArrayList<Node> neighbours = adjList.get(current);
+            HashSet<Node> neighbours = adjList.get(current);
             for (Node neighbour : neighbours) {
                 Double costG = costSoFar.get(current.getName()) + getCost(current, neighbour);
                 if (!costSoFar.containsKey(neighbour.getName()) || costG < costSoFar.get(neighbour.getName())) {
@@ -160,6 +176,10 @@ public class Graph {
         // End of A* Algorithm
 
         // Untuk print ke layar 
+        if (!cameFrom.containsKey(end)) {
+            System.out.println("Tidak ditemukan jalan");
+            return;
+        }
         String current = end;
         ArrayList<String> path = new ArrayList<String>();
         while (current != null) {

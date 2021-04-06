@@ -8,6 +8,7 @@ public class Node implements Comparable<Node> {
 
     private double lat;
     private double lon;
+    public static final long EARTH_RADIUS = 6371000L;
 
     @Override
     public int hashCode() {
@@ -56,7 +57,11 @@ public class Node implements Comparable<Node> {
 
     @Override
     public String toString() {
-        return String.format("Name : %s <lon: %.3f lat: %.3f>\n", name, lon, lat);
+        return this.name;
+    }
+
+    public String getLL(){
+        return String.format("<%.3f, %.3f>", lat, lon);
     }
 
     public double getLatitude() {
@@ -77,8 +82,27 @@ public class Node implements Comparable<Node> {
     }
 
     public double heuristic(Node end) {
-        // Use euclidian distance as heuristic
-        return Graph.haversine(this.getLatitude(), this.getLongitude(), end.getLatitude(), end.getLongitude());
+        
+        return haversine(end);
+    }
+
+    private double haversine (Node other) {
+        double lat1 = this.getLatitude();
+        double lat2 = other.getLatitude();
+        double lon1 = this.getLongitude();
+        double lon2 = other.getLongitude();
+
+        double phi1 = Math.toRadians(lat1);
+        double phi2 = Math.toRadians(lat2);
+
+        double deltaPhi = Math.toRadians(lat2 - lat1);
+        double deltaLambda = Math.toRadians(lon2 - lon1);
+        
+        double a = Math.pow(Math.sin(deltaPhi / 2.0), 2) + Math.cos(phi1) * Math.cos(phi2) * Math.pow(Math.sin(deltaLambda / 2.0),2);
+        
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+        return EARTH_RADIUS * c;
     }
 
 }
