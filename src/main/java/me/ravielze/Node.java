@@ -86,6 +86,12 @@ public class Node implements Comparable<Node> {
         return haversine(end);
     }
 
+    /**
+     * Haversine Algorithm, untuk mencari jarak 2 pasang latitude, longitude
+     * 
+     * @param other node lain
+     * @return jarak dalam meter
+     */
     private double haversine(Node other) {
         double lat1 = this.getLatitude();
         double lat2 = other.getLatitude();
