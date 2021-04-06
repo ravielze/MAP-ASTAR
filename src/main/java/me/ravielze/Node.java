@@ -10,12 +10,16 @@ public class Node implements Comparable<Node> {
     private double lon;
     public static final long EARTH_RADIUS = 6371000L;
 
+    // Override hashCode supaya aman pada hashset dan hashmap saat melakukan
+    // containsKey
     @Override
     public int hashCode() {
         int result = name.hashCode();
         return result;
     }
 
+    // Override equals supaya aman saat membandingkan node, patokan equals hanya
+    // nama node saja
     @Override
     public boolean equals(Object o) {
         if (this == o)

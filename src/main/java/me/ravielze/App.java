@@ -5,8 +5,7 @@ import java.util.InputMismatchException;
 import java.util.Scanner;
 
 /**
- * Hello world!
- *
+ * Main Class
  */
 public class App {
 
