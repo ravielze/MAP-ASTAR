@@ -1,12 +1,9 @@
 package me.ravielze;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.PriorityQueue;
 import java.util.Map;
-
 
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
@@ -22,15 +19,16 @@ public class Graph {
     public Graph() {
 
     }
+
     /**
      * Untuk menambah node pada graf
      * 
-     * @param node  Nama node
-     * @param lat   Koordinat Latitude
-     * @param lon   Koordinat Longitude
+     * @param node Nama node
+     * @param lat  Koordinat Latitude
+     * @param lon  Koordinat Longitude
      * @return Node the result node added
      */
-    public Node addNode (String node, double lat, double lon) {
+    public Node addNode(String node, double lat, double lon) {
         Node curr = getNodeByString(node);
         if (curr == null) {
             Node newNode = new Node(node, 0, 0, lat, lon);
@@ -39,13 +37,14 @@ public class Graph {
         }
         return curr;
     }
+
     /**
      * Untuk menambah node pada graf
      * 
-     * @param node  Nama node
+     * @param node Nama node
      * @return Node the result node added
      */
-    public Node addNode (Node node) {
+    public Node addNode(Node node) {
         if (!adjList.containsKey(node)) {
             adjList.put(node, new HashSet<Node>());
         }
@@ -67,7 +66,7 @@ public class Graph {
         // Kalau node end belum ada di adjacency List, construct new List
 
         // Tambahkan end pada adjacency list milik node start
-        
+
         adjList.get(startNode).add(endNode);
         // lakukan sebaliknya pada end dan start
         adjList.get(endNode).add(startNode);
@@ -75,8 +74,8 @@ public class Graph {
         // Masukkan node start dan end pada cost table
         // Ini adjacency matrix
         double distance = startNode.heuristic(endNode);
-        costTable.put(startNode,endNode, distance);
-        costTable.put(endNode,startNode, distance);
+        costTable.put(startNode, endNode, distance);
+        costTable.put(endNode, startNode, distance);
     }
 
     /**
@@ -86,7 +85,7 @@ public class Graph {
      * @param end   node akhir, bisa ditukar dengan start
      * @return infinity positive apabila tidak bertetangga,
      */
-    private double getCost(Node start, Node end) {
+    public double getCost(Node start, Node end) {
         // Kalau tidak ada di tabel
         if (costTable.get(start, end) == null || costTable.get(end, start) == null) {
             return Double.POSITIVE_INFINITY;
@@ -95,13 +94,16 @@ public class Graph {
         return costTable.get(start, end);
     }
 
-    public void showGraph () {
+    /**
+     * Menampilkan graf ke layar
+     */
+    public void showGraph() {
         for (Map.Entry<Node, HashSet<Node>> entry : adjList.entrySet()) {
             System.out.println(entry.getKey() + " " + entry.getKey().getLL());
-            
+
             int maxLength = 0;
             for (Node neighbour : entry.getValue()) {
-                if (neighbour.getName().length() > maxLength){
+                if (neighbour.getName().length() > maxLength) {
                     maxLength = neighbour.getName().length();
                 }
             }
@@ -109,7 +111,7 @@ public class Graph {
             maxLength += 2;
             String format = "\t-> %-" + maxLength + "s %-19s %-10s\n";
             for (Node neighbour : entry.getValue()) {
-                String dis = String.format("[%.2f km]", getCost(entry.getKey(), neighbour)/1000D);
+                String dis = String.format("[%.2f km]", getCost(entry.getKey(), neighbour) / 1000D);
                 System.out.printf(format, neighbour.getName(), neighbour.getLL(), dis);
             }
             System.out.println();
@@ -124,13 +126,14 @@ public class Graph {
     public Collection<Node> getAllNode() {
         return adjList.keySet();
     }
+
     /**
      * Mendapatkan instance node dengan name
      * 
-     * @param name  string yang akan dicari
+     * @param name string yang akan dicari
      * @return Node node yang namanya sesuai
      */
-    private Node getNodeByString (String name) {
+    public Node getNodeByString(String name) {
         for (Node node : adjList.keySet()) {
             if (node.getName().equals(name)) {
                 return node;
@@ -139,65 +142,14 @@ public class Graph {
         return null;
     }
 
-    public void aStarSearch(String start, String end) {
-        // A* Algorithm
-        PriorityQueue<Node> pQueue = new PriorityQueue<Node>();
-        Node startNode = getNodeByString(start);
-        Node endNode = getNodeByString(end);
-        if (startNode == null || endNode == null) {
-            System.out.println("Node not found");
-            return;
-        }
-        pQueue.add(startNode);
-
-        HashMap<String, Double> costSoFar = new HashMap<String, Double>();
-        costSoFar.put(start, 0.0);
-        HashMap<String, String> cameFrom = new HashMap<String, String>();
-        cameFrom.put(start, null);
-
-        while (!pQueue.isEmpty()) {
-            Node current = pQueue.poll();
-
-            if (current.getName() == end) break;
-
-            HashSet<Node> neighbours = adjList.get(current);
-            for (Node neighbour : neighbours) {
-                Double costG = costSoFar.get(current.getName()) + getCost(current, neighbour);
-                if (!costSoFar.containsKey(neighbour.getName()) || costG < costSoFar.get(neighbour.getName())) {
-                    costSoFar.put(neighbour.getName(), costG);
-                    Double costH = neighbour.heuristic(endNode);
-                    Node newNode = new Node(neighbour, costH, costG);
-                    pQueue.add(newNode);
-                    cameFrom.put(neighbour.getName(), current.getName());
-
-                }
-            }
-        }
-        // End of A* Algorithm
-
-        // Untuk print ke layar 
-        if (!cameFrom.containsKey(end)) {
-            System.out.println("Tidak ditemukan jalan");
-            return;
-        }
-        String current = end;
-        ArrayList<String> path = new ArrayList<String>();
-        while (current != null) {
-            path.add(current);
-            current = cameFrom.get(current);
-        }
-        System.out.println("Path : ");
-
-        for (int i = path.size() - 1; i >= 0; i--) {
-            if (i != path.size() - 1) {
-                System.out.print("->");
-            }
-            System.out.print(path.get(i));
-        }
-        System.out.println();
-        System.out.printf("Estimated cost : %.2f\n", costSoFar.get(end));
-
+    /**
+     * Mendapatkan tetangga dari suatu node
+     * 
+     * @param Node Node yang akan dicari tetangganya
+     * @return HashSet<Node> Tetangga dari node
+     */
+    public HashSet<Node> getAdjacent(Node n) {
+        return this.adjList.get(n);
     }
-
 
 }

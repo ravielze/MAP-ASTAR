@@ -47,7 +47,7 @@ public class Node implements Comparable<Node> {
         this.lon = lon;
     }
 
-    public Node(Node old, double costH, double costG){
+    public Node(Node old, double costH, double costG) {
         this.name = old.getName();
         this.lat = old.getLatitude();
         this.lon = old.getLongitude();
@@ -60,7 +60,7 @@ public class Node implements Comparable<Node> {
         return this.name;
     }
 
-    public String getLL(){
+    public String getLL() {
         return String.format("<%.3f, %.3f>", lat, lon);
     }
 
@@ -82,11 +82,11 @@ public class Node implements Comparable<Node> {
     }
 
     public double heuristic(Node end) {
-        
+
         return haversine(end);
     }
 
-    private double haversine (Node other) {
+    private double haversine(Node other) {
         double lat1 = this.getLatitude();
         double lat2 = other.getLatitude();
         double lon1 = this.getLongitude();
@@ -97,9 +97,10 @@ public class Node implements Comparable<Node> {
 
         double deltaPhi = Math.toRadians(lat2 - lat1);
         double deltaLambda = Math.toRadians(lon2 - lon1);
-        
-        double a = Math.pow(Math.sin(deltaPhi / 2.0), 2) + Math.cos(phi1) * Math.cos(phi2) * Math.pow(Math.sin(deltaLambda / 2.0),2);
-        
+
+        double a = Math.pow(Math.sin(deltaPhi / 2.0), 2)
+                + Math.cos(phi1) * Math.cos(phi2) * Math.pow(Math.sin(deltaLambda / 2.0), 2);
+
         double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
         return EARTH_RADIUS * c;
